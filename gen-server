@@ -1,0 +1,22 @@
+#!/bin/zsh
+[ -f ca-key.pem ] || exit 1
+[ -f ca-cert.pem ] || exit 1
+ORG=$(
+	certtool -i --infile ca-cert.pem |
+	sed -n '/Issuer:/s/^.*CN=//p'
+)
+for host in "$@"
+do
+	certtool --generate-privkey >"${host}-key.pem"
+	(
+		echo "organization=${ORG}"
+		echo "cn=${host}"
+		echo "tls_www_server"
+		echo "encryption_key"
+		echo "signing_key"
+	) >"${host}.info"
+	certtool --generate-certificate --load-privkey ${host}-key.pem \
+		--load-ca-certificate ca-cert.pem --load-ca-privkey ca-key.pem \
+		--template ${host}.info --outfile ${host}-cert.pem
+	rm -f "${host}.info"
+done

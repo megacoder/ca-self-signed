@@ -1,0 +1,14 @@
+#!/bin/zsh
+# Run this to make a certificate authority for signing
+
+ORG='Welcome to the Darkzone'
+
+certtool --generate-privkey >ca-key.pem
+(
+	echo "cn=${ORG}"
+	echo "ca"
+	echo "cert_signing_key"
+) >ca.info
+certtool --generate-self-signed --load-privkey ca-key.pem	\
+	--template ca.info --outfile ca-cert.pem
+rm -f ca.info
